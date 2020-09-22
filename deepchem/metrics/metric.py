@@ -407,7 +407,7 @@ def to_one_hot(y: np.ndarray, n_classes: int = 2) -> np.ndarray:
 
 
 def from_one_hot(y: np.ndarray, axis: int = 1) -> np.ndarray:
-  """Transorms label vector from one-hot encoding.
+  """Transforms label vector from one-hot encoding.
 
   Parameters
   ----------
@@ -660,7 +660,6 @@ class Metric(object):
           y_task,
           y_pred_task,
           w_task,
-          n_samples=n_samples,
           use_sample_weights=use_sample_weights,
           **kwargs)
       computed_metrics.append(metric_value)

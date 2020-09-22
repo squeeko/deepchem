@@ -7,7 +7,7 @@ import deepchem
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DIR = deepchem.utils.get_data_dir()
+DEFAULT_DIR = deepchem.utils.data_utils.get_data_dir()
 GDB9_URL = "https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/gdb9.tar.gz"
 QM9_CSV_URL = "https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/qm9.csv"
 
@@ -24,7 +24,7 @@ def load_qm9(featurizer='CoulombMatrix',
   QM9 is a comprehensive dataset that provides geometric, energetic, 
   electronic and thermodynamic properties for a subset of GDB-17 database, 
   comprising 134 thousand stable organic molecules with up to 9 heavy atoms.
-  All moleucles are modeled using density functional theory
+  All molecules are modeled using density functional theory
   (B3LYP/6-31G(2df,p) based DFT).
 
   Random splitting is recommended for this dataset.
@@ -92,7 +92,7 @@ def load_qm9(featurizer='CoulombMatrix',
       save_folder = os.path.join(save_folder, img_spec)
     save_folder = os.path.join(save_folder, str(split))
 
-    loaded, all_dataset, transformers = deepchem.utils.save.load_dataset_from_disk(
+    loaded, all_dataset, transformers = deepchem.utils.data_utils.load_dataset_from_disk(
         save_folder)
     if loaded:
       return qm9_tasks, all_dataset, transformers
@@ -101,13 +101,13 @@ def load_qm9(featurizer='CoulombMatrix',
     dataset_file = os.path.join(data_dir, "gdb9.sdf")
 
     if not os.path.exists(dataset_file):
-      deepchem.utils.download_url(url=GDB9_URL, dest_dir=data_dir)
-      deepchem.utils.untargz_file(
+      deepchem.utils.data_utils.download_url(url=GDB9_URL, dest_dir=data_dir)
+      deepchem.utils.data_utils.untargz_file(
           os.path.join(data_dir, 'gdb9.tar.gz'), data_dir)
   else:
     dataset_file = os.path.join(data_dir, "qm9.csv")
     if not os.path.exists(dataset_file):
-      deepchem.utils.download_url(url=QM9_CSV_URL, dest_dir=data_dir)
+      deepchem.utils.data_utils.download_url(url=QM9_CSV_URL, dest_dir=data_dir)
 
   if featurizer in ['CoulombMatrix', 'BPSymmetryFunctionInput', 'MP', 'Raw']:
     if featurizer == 'CoulombMatrix':
@@ -119,11 +119,7 @@ def load_qm9(featurizer='CoulombMatrix',
     elif featurizer == 'MP':
       featurizer = deepchem.feat.WeaveFeaturizer(
           graph_distance=False, explicit_H=True)
-    loader = deepchem.data.SDFLoader(
-        tasks=qm9_tasks,
-        smiles_field="smiles",
-        mol_field="mol",
-        featurizer=featurizer)
+    loader = deepchem.data.SDFLoader(tasks=qm9_tasks, featurizer=featurizer)
   else:
     if featurizer == 'ECFP':
       featurizer = deepchem.feat.CircularFingerprint(size=1024)
@@ -137,9 +133,9 @@ def load_qm9(featurizer='CoulombMatrix',
       featurizer = deepchem.feat.SmilesToImage(
           img_size=img_size, img_spec=img_spec)
     loader = deepchem.data.CSVLoader(
-        tasks=qm9_tasks, smiles_field="smiles", featurizer=featurizer)
+        tasks=qm9_tasks, feature_field="smiles", featurizer=featurizer)
 
-  dataset = loader.featurize(dataset_file)
+  dataset = loader.create_dataset(dataset_file)
   if split == None:
     raise ValueError()
 
@@ -168,6 +164,6 @@ def load_qm9(featurizer='CoulombMatrix',
     test_dataset = transformer.transform(test_dataset)
 
   if reload:
-    deepchem.utils.save.save_dataset_to_disk(
+    deepchem.utils.data_utils.save_dataset_to_disk(
         save_folder, train_dataset, valid_dataset, test_dataset, transformers)
   return qm9_tasks, (train_dataset, valid_dataset, test_dataset), transformers

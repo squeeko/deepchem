@@ -7,7 +7,7 @@ import deepchem
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DIR = deepchem.utils.get_data_dir()
+DEFAULT_DIR = deepchem.utils.data_utils.get_data_dir()
 MUV_URL = "https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/muv.csv.gz"
 
 
@@ -37,8 +37,8 @@ def load_muv(featurizer='ECFP',
 
   References
   ----------
-  .. [1] Rohrer, Sebastian G., and Knut Baumann. "Maximum unbiased validation 
-     (MUV) data sets for virtual screening based on PubChem bioactivity data." 
+  .. [1] Rohrer, Sebastian G., and Knut Baumann. "Maximum unbiased validation
+     (MUV) data sets for virtual screening based on PubChem bioactivity data."
      Journal of chemical information and modeling 49.2 (2009): 169-184.
   """
   # Load MUV dataset
@@ -62,14 +62,14 @@ def load_muv(featurizer='ECFP',
       save_folder = os.path.join(save_folder, img_spec)
     save_folder = os.path.join(save_folder, str(split))
 
-    loaded, all_dataset, transformers = deepchem.utils.save.load_dataset_from_disk(
+    loaded, all_dataset, transformers = deepchem.utils.data_utils.load_dataset_from_disk(
         save_folder)
     if loaded:
       return MUV_tasks, all_dataset, transformers
 
   dataset_file = os.path.join(data_dir, "muv.csv.gz")
   if not os.path.exists(dataset_file):
-    deepchem.utils.download_url(url=MUV_URL, dest_dir=data_dir)
+    deepchem.utils.data_utils.download_url(url=MUV_URL, dest_dir=data_dir)
 
   # Featurize MUV dataset
   logger.info("About to featurize MUV dataset.")
@@ -89,8 +89,8 @@ def load_muv(featurizer='ECFP',
         img_size=img_size, img_spec=img_spec)
 
   loader = deepchem.data.CSVLoader(
-      tasks=MUV_tasks, smiles_field="smiles", featurizer=featurizer)
-  dataset = loader.featurize(dataset_file)
+      tasks=MUV_tasks, feature_field="smiles", featurizer=featurizer)
+  dataset = loader.create_dataset(dataset_file)
 
   if split == None:
     transformers = [deepchem.trans.BalancingTransformer(dataset=dataset)]
@@ -129,6 +129,6 @@ def load_muv(featurizer='ECFP',
         frac_test=frac_test)
     all_dataset = (train, valid, test)
     if reload:
-      deepchem.utils.save.save_dataset_to_disk(save_folder, train, valid, test,
-                                               transformers)
+      deepchem.utils.data_utils.save_dataset_to_disk(save_folder, train, valid,
+                                                     test, transformers)
     return MUV_tasks, all_dataset, transformers

@@ -4,16 +4,15 @@ Calculated formation energies for inorganic crystals from Materials Project.
 import os
 import logging
 import deepchem
-from deepchem.feat import Featurizer, MaterialStructureFeaturizer, MaterialCompositionFeaturizer
-from deepchem.trans import Transformer
+from deepchem.feat import MaterialStructureFeaturizer
 from deepchem.splits.splitters import Splitter
 from deepchem.molnet.defaults import get_defaults
 
-from typing import List, Tuple, Dict, Optional, Union, Any, Type
+from typing import List, Tuple, Dict, Optional, Any
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DIR = deepchem.utils.get_data_dir()
+DEFAULT_DIR = deepchem.utils.data_utils.get_data_dir()
 MPFORME_URL = 'https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/mp_formation_energy.tar.gz'
 
 # dict of accepted featurizers for this dataset
@@ -56,7 +55,7 @@ def load_mp_formation_energy(
             'transform_X': True
         }
     },
-    **kwargs) -> Tuple[List, Tuple, List]:
+    **kwargs) -> Tuple[List, Optional[Tuple], List]:
   """Load mp formation energy dataset.
 
   Contains 132752 calculated formation energies and inorganic
@@ -67,11 +66,10 @@ def load_mp_formation_energy(
 
   For more details on the dataset see [1]_. For more details
   on previous benchmarks for this dataset, see [2]_.
-  
+
   Parameters
   ----------
-  featurizer : MaterialCompositionFeaturizer 
-    (default CGCNNFeaturizer)
+  featurizer : MaterialStructureFeaturizer (default SineCoulombMatrix)
     A featurizer that inherits from deepchem.feat.Featurizer.
   transformers : List[Transformer]
     A transformer that inherits from deepchem.trans.Transformer.
@@ -80,9 +78,9 @@ def load_mp_formation_energy(
   reload : bool (default True)
     Try to reload dataset from disk if already downloaded. Save to disk
     after featurizing.
-  data_dir : str, optional
+  data_dir : str, optional (default None)
     Path to datasets.
-  save_dir : str, optional
+  save_dir : str, optional (default None)
     Path to featurized datasets.
   featurizer_kwargs : Dict[str, Any]
     Specify parameters to featurizer, e.g. {"size": 1024}
@@ -90,7 +88,7 @@ def load_mp_formation_energy(
     Specify parameters to splitter, e.g. {"seed": 42}
   transformer_kwargs : dict
     Maps transformer names to constructor arguments, e.g.
-    {"BalancingTransformer": {"transform_x":True, "transform_y":False}}
+    {"BalancingTransformer": {"transform_X":True, "transform_y":False}}
   **kwargs : additional optional arguments.
 
   Returns
@@ -107,9 +105,11 @@ def load_mp_formation_energy(
 
   References
   ----------
-  .. [1] A. Jain*, S.P. Ong*, et al. (*=equal contributions) The Materials Project: A materials genome approach to accelerating materials innovation APL Materials, 2013, 1(1), 011002. doi:10.1063/1.4812323 (2013).
-
-  .. [2] Dunn, A. et al. "Benchmarking Materials Property Prediction Methods: The Matbench Test Set and Automatminer Reference Algorithm." https://arxiv.org/abs/2005.00707 (2020)
+  .. [1] A. Jain*, S.P. Ong*, et al. (*=equal contributions) The Materials Project:
+     A materials genome approach to accelerating materials innovation APL Materials,
+     2013, 1(1), 011002. doi:10.1063/1.4812323 (2013).
+  .. [2] Dunn, A. et al. "Benchmarking Materials Property Prediction Methods: The Matbench
+     Test Set and Automatminer Reference Algorithm." https://arxiv.org/abs/2005.00707 (2020)
 
   Examples
   --------
@@ -150,7 +150,7 @@ def load_mp_formation_energy(
     save_folder = os.path.join(save_dir, "mp-forme-featurized", featurizer_name,
                                splitter_name)
 
-    loaded, all_dataset, transformers = deepchem.utils.save.load_dataset_from_disk(
+    loaded, all_dataset, transformers = deepchem.utils.data_utils.load_dataset_from_disk(
         save_folder)
     if loaded:
       return my_tasks, all_dataset, transformers
@@ -168,8 +168,9 @@ def load_mp_formation_energy(
     if not os.path.exists(dataset_file):
       targz_file = os.path.join(data_dir, 'mp_formation_energy.tar.gz')
       if not os.path.exists(targz_file):
-        deepchem.utils.download_url(url=MPFORME_URL, dest_dir=data_dir)
-      deepchem.utils.untargz_file(
+        deepchem.utils.data_utils.download_url(
+            url=MPFORME_URL, dest_dir=data_dir)
+      deepchem.utils.data_utils.untargz_file(
           os.path.join(data_dir, 'mp_formation_energy.tar.gz'), data_dir)
 
     # Changer loader to match featurizer and data file type
@@ -199,7 +200,7 @@ def load_mp_formation_energy(
     test_dataset = transformer.transform(test_dataset)
 
   if reload:  # save to disk
-    deepchem.utils.save.save_dataset_to_disk(
+    deepchem.utils.data_utils.save_dataset_to_disk(
         save_folder, train_dataset, valid_dataset, test_dataset, transformers)
 
   return my_tasks, (train_dataset, valid_dataset, test_dataset), transformers
